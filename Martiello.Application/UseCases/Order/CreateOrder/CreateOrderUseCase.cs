@@ -4,7 +4,6 @@ using Martiello.Domain.Extension;
 using Martiello.Domain.Interface.Repository;
 using Martiello.Domain.Interface.Service;
 using Martiello.Domain.UseCase;
-using Martiello.Domain.UseCase.Interface;
 using Microsoft.Extensions.Logging;
 
 namespace Martiello.Application.UseCases.Order.CreateOrder
@@ -34,25 +33,27 @@ namespace Martiello.Application.UseCases.Order.CreateOrder
             _logger = logger;
         }
 
-        public async Task<IUseCaseOutput> ExecuteAsync(CreateOrderInput input)
+        public async Task<Output> Handle(CreateOrderInput request, CancellationToken cancellationToken)
         {
             try
             {
+                OutputBuilder output = OutputBuilder.Create();
                 List<Domain.Entity.Product> products = await _productRepository.GetAllProductsAsync();
 
-                IEnumerable<Domain.Entity.Product> orderProducts = products.Where(p => input.ProductIds.Contains(p.Id));
+                IEnumerable<Domain.Entity.Product> orderProducts = products.Where(p => request.ProductIds.Contains(p.Id));
 
                 if (!orderProducts.Any())
-                    return UseCaseOutput.Output().BadRequest("No valid products found for the order.");
+                    return output.WithError("No valid products found for the order.").BadRequestError();
 
                 Domain.Entity.Customer customer = new Domain.Entity.Customer();
                 Domain.Entity.Order order;
-                if (input.CustomerDocument.HasValue)
+                if (request.CustomerDocument.HasValue)
                 {
-                    if (input.CustomerDocument.Value.IsValidCpf())
-                        customer = await _customerRepository.GetCustomerByDocumentAsync(input.CustomerDocument.Value);
+                    long document = request.CustomerDocument.Value;
+                    if (document.IsValidCpf())
+                        customer = await _customerRepository.GetCustomerByDocumentAsync(document);
                     else
-                        return UseCaseOutput.Output().BadRequest("Document number is invalid.");
+                        return output.WithError("Document number is invalid.").BadRequestError();
 
                     order = new Domain.Entity.Order(customer, orderProducts);
                 }
@@ -71,13 +72,12 @@ namespace Martiello.Application.UseCases.Order.CreateOrder
                 string qrCodeBase64 = Convert.ToBase64String(paymentLink.ToQRCode());
                 string qrCode = $"data:image/png;base64,{qrCodeBase64}";
 
-                CreateOrderOutput output = new CreateOrderOutput(order.Number, order.Status, qrCode);
-                return UseCaseOutput.Output(output).Ok();
+                return output.WithResult(new CreateOrderOutput(order.Number, order.Status, qrCode)).Response();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while creating order.");
-                return UseCaseOutput.Output().InternalServerError("An error occurred while creating the order.");
+                return OutputBuilder.Create().WithError($"An error occurred while creating the order. {ex.Message}").InternalServerError();
             }
         }
     }

@@ -7,7 +7,7 @@ using Martiello.Domain.UseCase;
 
 namespace Martiello.Application.UseCases.Product.CreateProduct
 {
-    public class CreateProductOutput : UseCaseOutput
+    public class CreateProductOutput : IUseCaseOutput
     {
     }
 }

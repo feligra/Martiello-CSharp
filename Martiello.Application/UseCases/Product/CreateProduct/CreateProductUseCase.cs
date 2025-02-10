@@ -2,7 +2,7 @@
 using Martiello.Domain.Entity;
 using Martiello.Domain.Interface.Repository;
 using Martiello.Domain.UseCase;
-using Martiello.Domain.UseCase.Interface;
+using Martiello.Domain.UseCase;
 using Microsoft.Extensions.Logging;
 
 namespace Martiello.Application.UseCases.Product.CreateProduct

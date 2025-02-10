@@ -6,7 +6,7 @@ using Martiello.Domain.Entity;
 using Martiello.Domain.Extension;
 using Martiello.Domain.Interface.Repository;
 using Martiello.Domain.UseCase;
-using Martiello.Domain.UseCase.Interface;
+using Martiello.Domain.UseCase;
 using Microsoft.Extensions.Logging;
 using ProductDefinition = Martiello.Domain.Entity.Product;
 namespace Martiello.Application.UseCases.Product.GetAllProducts

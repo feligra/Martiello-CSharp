@@ -2,7 +2,7 @@
 
 namespace Martiello.Application.UseCases.Product.DeleteProduct
 {
-    public class DeleteProductOutput : UseCaseOutput
+    public class DeleteProductOutput : IUseCaseOutput
     {
     }
 }

@@ -1,7 +1,6 @@
 ﻿using Martiello.Application.Extensions;
 using Martiello.Domain.Interface.Repository;
 using Martiello.Domain.UseCase;
-using Martiello.Domain.UseCase.Interface;
 using Microsoft.Extensions.Logging;
 
 namespace Martiello.Application.UseCases.Customer.DeleteCustomer
@@ -17,36 +16,34 @@ namespace Martiello.Application.UseCases.Customer.DeleteCustomer
             _logger = logger;
         }
 
-        public async Task<IUseCaseOutput> ExecuteAsync(DeleteCustomerInput input)
+
+        public async Task<Output> Handle(DeleteCustomerInput request, CancellationToken cancellationToken)
         {
             try
             {
-                if (!input.Document.ToString().IsValidCpf())
+                OutputBuilder output = OutputBuilder.Create();
+                if (!request.Document.ToString().IsValidCpf())
                 {
-                    return UseCaseOutput.Output(new DeleteCustomerOutput($"Invalid document.", false)).BadRequest("Invalid document.");
+                    return output.WithError("Invalid document.").BadRequestError();
                 }
 
-                Domain.Entity.Customer customer = await _customerRepository.GetCustomerByDocumentAsync(input.Document);
+                Domain.Entity.Customer customer = await _customerRepository.GetCustomerByDocumentAsync(request.Document);
                 if (customer == null)
                 {
-                    _logger.LogWarning("Customer with Document {Document} not found.", input.Document);
-                    return UseCaseOutput.Output(new DeleteCustomerOutput($"Customer with Document {input.Document} not found.", false)).Ok();
+                    _logger.LogWarning("Customer with Document {Document} not found.", request.Document);
+                    return output.WithError($"Customer with Document {request.Document} not found.").NotFoundError();
                 }
 
-                bool success = await _customerRepository.DeleteCustomerAsync(customer.Id);
-                if (success)
-                {
-                    _logger.LogInformation("Customer with ID {CustomerId} successfully deleted.", customer.Id);
-                    return UseCaseOutput.Output(new DeleteCustomerOutput("Customer with ID {customer.Id} was deleted.", true)).Ok();
-                }
+                await _customerRepository.DeleteCustomerAsync(customer.Id);
 
-                _logger.LogWarning("Failed to delete customer with ID {CustomerId}.", customer.Id);
-                return UseCaseOutput.Output(new DeleteCustomerOutput("Failed to delete customer.", false)).Ok();
+                _logger.LogInformation("Customer with ID {CustomerId} successfully deleted.", customer.Id);
+                return output.WithResult(new DeleteCustomerOutput("Customer with ID {customer.Id} was deleted.", true)).Response();
+
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while deleting customer.");
-                return UseCaseOutput.Output().InternalServerError("An error occurred while deleting the customer.");
+                return OutputBuilder.Create().WithError($"An error occurred while deleting the customer. {ex.Message}").InternalServerError();
             }
         }
     }

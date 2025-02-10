@@ -2,7 +2,7 @@
 
 namespace Martiello.Application.UseCases.Customer.DeleteCustomer
 {
-    public class DeleteCustomerOutput : UseCaseOutput
+    public class DeleteCustomerOutput : IUseCaseOutput
     {
         public DeleteCustomerOutput(string message, bool success)
         {

@@ -2,7 +2,6 @@
 using Martiello.Domain.DTO;
 using Martiello.Domain.Interface.Repository;
 using Martiello.Domain.UseCase;
-using Martiello.Domain.UseCase.Interface;
 using Microsoft.Extensions.Logging;
 
 namespace Martiello.Application.UseCases.Order.GetOrderStatus
@@ -20,22 +19,24 @@ namespace Martiello.Application.UseCases.Order.GetOrderStatus
             _logger = logger;
         }
 
-        public async Task<IUseCaseOutput> ExecuteAsync(GetOrderStatusInput input)
+        public async Task<Output> Handle(GetOrderStatusInput request, CancellationToken cancellationToken)
         {
             try
             {
-                Domain.Entity.Order orderStatus = await _orderRepository.GetOrderByDocumentAsync(input.Document);
+                OutputBuilder output = OutputBuilder.Create();
+                Domain.Entity.Order orderStatus = await _orderRepository.GetOrderByDocumentAsync(request.Document);
 
                 if (orderStatus == null)
-                    return UseCaseOutput.Output().NotFound($"Order status not found for Document: {input.Document}.");
+                    return output.WithError($"Order status not found for Document: {request.Document}.").NotFoundError();
+
 
                 OrderStatusDTO orderStatusDTO = _mapper.Map<OrderStatusDTO>(orderStatus);
-                return UseCaseOutput.Output(orderStatusDTO).Ok();
+                return output.WithResult(orderStatusDTO).Response();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while retrieving order status.");
-                return UseCaseOutput.Output().InternalServerError("An error occurred while retrieving the order status.");
+                return OutputBuilder.Create().WithError($"An error occurred while retrieving the order status. {ex.Message}").InternalServerError();
             }
         }
     }

@@ -2,7 +2,7 @@
 
 namespace Martiello.Application.UseCases.Order.CreateOrder
 {
-    public class CreateOrderOutput : UseCaseOutput
+    public class CreateOrderOutput : IUseCaseOutput
     {
         public long OrderNumber { get; private set; }
         public string Status { get; private set; }

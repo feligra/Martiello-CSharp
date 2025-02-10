@@ -1,6 +1,8 @@
-﻿namespace Martiello.Application.UseCases.Order.GetOrderStatus
+﻿using Martiello.Domain.UseCase;
+
+namespace Martiello.Application.UseCases.Order.GetOrderStatus
 {
-    public class GetOrderStatusOutput
+    public class GetOrderStatusOutput : IUseCaseOutput
     {
     }
 }
