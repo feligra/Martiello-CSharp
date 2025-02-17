@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 
 namespace Martiello.Domain.UseCase
 {
-    internal class Presenter : IPresenter
+    public class Presenter : IPresenter
     {
         private readonly IMediator _mediator;
         private readonly PresenterOptions _options;

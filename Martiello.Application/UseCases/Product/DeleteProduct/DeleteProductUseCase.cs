@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Martiello.Domain.Interface.Repository;
-using Martiello.Domain.UseCase;
+﻿using Martiello.Domain.Interface.Repository;
 using Martiello.Domain.UseCase;
 using Microsoft.Extensions.Logging;
 
@@ -23,24 +17,27 @@ namespace Martiello.Application.UseCases.Product.DeleteProduct
             _logger = logger;
         }
 
-        public async Task<IUseCaseOutput> ExecuteAsync(DeleteProductInput input)
+        public async Task<Output> Handle(DeleteProductInput request, CancellationToken cancellationToken)
         {
             try
             {
-                var product = await _productRepository.GetProductByIdAsync(input.Id);
+                OutputBuilder output = OutputBuilder.Create();
+
+                Domain.Entity.Product product = await _productRepository.GetProductByIdAsync(request.Id);
 
                 if (product == null)
-                    return UseCaseOutput.Output().NotFound($"Product with ID {input.Id} not found.");
+                    return output.WithError($"Product with ID {request.Id} not found.").NotFoundError();
 
-                await _productRepository.DeleteProductAsync(input.Id);
+                await _productRepository.DeleteProductAsync(request.Id);
 
-                return UseCaseOutput.Output(new DeleteProductOutput()).Ok();
+                return output.WithResult(new DeleteProductOutput()).Response();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while deleting product");
-                return UseCaseOutput.Output().InternalServerError("An error occurred while deleting the product.");
+                return OutputBuilder.Create().WithError("An error occurred while deleting the product.").InternalServerError();
             }
         }
+
     }
 }

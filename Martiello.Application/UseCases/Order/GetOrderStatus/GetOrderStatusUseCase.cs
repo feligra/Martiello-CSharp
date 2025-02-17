@@ -31,7 +31,7 @@ namespace Martiello.Application.UseCases.Order.GetOrderStatus
 
 
                 OrderStatusDTO orderStatusDTO = _mapper.Map<OrderStatusDTO>(orderStatus);
-                return output.WithResult(orderStatusDTO).Response();
+                return output.WithResult(new GetOrderStatusOutput(orderStatusDTO)).Response();
             }
             catch (Exception ex)
             {

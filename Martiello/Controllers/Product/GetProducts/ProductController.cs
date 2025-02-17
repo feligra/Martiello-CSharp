@@ -1,8 +1,7 @@
-﻿using Martiello.Domain.UseCase.Interface;
+﻿using Martiello.Application.UseCases.Product.GetAllProducts;
+using Martiello.Domain.Enums;
 using Martiello.Domain.UseCase;
 using Microsoft.AspNetCore.Mvc;
-using Martiello.Application.UseCases.Product.GetAllProducts;
-using Martiello.Domain.Enums;
 
 namespace Martiello.Controllers.Product.GetProducts
 {
@@ -35,7 +34,7 @@ namespace Martiello.Controllers.Product.GetProducts
         [ProducesResponseType(typeof(Output), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetProductsAsync([FromQuery] ProductCategory? category)
         {
-            return await _presenter.Ok(new GetAllProductsInput(category));
+            return await _presenter.OK(new GetAllProductsInput(category));
         }
     }
 }

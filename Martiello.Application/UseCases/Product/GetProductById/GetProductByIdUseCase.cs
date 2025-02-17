@@ -1,8 +1,6 @@
 ﻿using AutoMapper;
-using Martiello.Application.UseCases.Order.GetOrder;
 using Martiello.Domain.DTO;
 using Martiello.Domain.Interface.Repository;
-using Martiello.Domain.UseCase;
 using Martiello.Domain.UseCase;
 using Microsoft.Extensions.Logging;
 
@@ -23,23 +21,24 @@ namespace Martiello.Application.UseCases.Product.GetProductById
             _mapper = mapper;
             _logger = logger;
         }
-        public async Task<IUseCaseOutput> ExecuteAsync(GetProductByIdInput input)
+        public async Task<Output> Handle(GetProductByIdInput request, CancellationToken cancellationToken)
         {
             try
             {
-                var product = await _productRepository.GetProductByIdAsync(input.Id);
+                OutputBuilder output = OutputBuilder.Create();
+                Domain.Entity.Product product = await _productRepository.GetProductByIdAsync(request.Id);
 
                 if (product == null)
-                    return UseCaseOutput.Output().NotFound($"Product not found.");
+                    return output.WithError("Product not found.").NotFoundError();
 
-                var output = new GetProductByIdOutput(_mapper.Map<ProductDTO>(product));
-                return UseCaseOutput.Output(output).Ok();
+                return output.WithResult(new GetProductByIdOutput(_mapper.Map<ProductDTO>(product))).Response();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while retrieving product with ID {Id}.", input.Id);
-                return UseCaseOutput.Output().InternalServerError("An error occurred while retrieving product the product.");
+                _logger.LogError(ex, "Error while retrieving product with ID {Id}.", request.Id);
+                return OutputBuilder.Create().WithError("An error occurred while retrieving product the product.").InternalServerError();
             }
         }
+
     }
 }

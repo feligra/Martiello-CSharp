@@ -31,7 +31,6 @@ namespace Martiello.Application.UseCases.Order.UpdateOrderStatus
                 _logger.LogInformation("Order status updated successfully. Id: {OrderId}, NewStatus: {NewStatus}",
                     request.OrderNumber, request.NewStatus);
 
-                
 
                 return output.WithResult(new UpdateOrderStatusOutput()).Response();
             }

@@ -1,11 +1,8 @@
 ﻿
 using AutoMapper;
-using Martiello.Application.UseCases.Product.GetProductById;
 using Martiello.Domain.DTO;
-using Martiello.Domain.Entity;
 using Martiello.Domain.Extension;
 using Martiello.Domain.Interface.Repository;
-using Martiello.Domain.UseCase;
 using Martiello.Domain.UseCase;
 using Microsoft.Extensions.Logging;
 using ProductDefinition = Martiello.Domain.Entity.Product;
@@ -26,31 +23,31 @@ namespace Martiello.Application.UseCases.Product.GetAllProducts
             _mapper = mapper;
             _logger = logger;
         }
-        public async Task<IUseCaseOutput> ExecuteAsync(GetAllProductsInput input)
+        public async Task<Output> Handle(GetAllProductsInput request, CancellationToken cancellationToken)
         {
             try
             {
+                OutputBuilder output = OutputBuilder.Create();
+
                 List<ProductDefinition> products = new();
 
-
-                if (input.Category.HasValue)
+                if (request.Category.HasValue)
                 {
-                    var category = input.Category.GetDescription();
+                    string category = request.Category.GetDescription();
                     products = await _productRepository.GetProductsByCategoryAsync(category);
                 }
                 else
                     products = await _productRepository.GetAllProductsAsync();
 
                 if (!products.Any())
-                    return UseCaseOutput.Output().NotFound($"Theres no producs.");
+                    return output.WithError("Theres no producs.").Response();
 
-                var output = new GetAllProductsOutput(_mapper.Map<IEnumerable<ProductDTO>>(products));
-                return UseCaseOutput.Output(output).Ok();
+                return output.WithResult(new GetAllProductsOutput(_mapper.Map<IEnumerable<ProductDTO>>(products))).Response();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while retrieving products");
-                return UseCaseOutput.Output().InternalServerError("An error occurred while retrieving products");
+                return OutputBuilder.Create().WithError("An error occurred while retrieving products").InternalServerError();
             }
         }
     }

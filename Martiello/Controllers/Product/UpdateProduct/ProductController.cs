@@ -1,7 +1,6 @@
-﻿using Martiello.Domain.UseCase.Interface;
+﻿using Martiello.Application.UseCases.Product.UpdateProduct;
 using Martiello.Domain.UseCase;
 using Microsoft.AspNetCore.Mvc;
-using Martiello.Application.UseCases.Product.UpdateProduct;
 
 namespace Martiello.Controllers.Product.UpdateProduct
 {
@@ -36,7 +35,7 @@ namespace Martiello.Controllers.Product.UpdateProduct
             if (!ModelState.IsValid)
                 return BadRequest();
 
-            return await _presenter.Ok(updateInput);
+            return await _presenter.OK(updateInput);
         }
     }
 }
