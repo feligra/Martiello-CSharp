@@ -185,7 +185,7 @@ namespace Martiello.Infrastructure.Repository
             }
         }
 
-        public async Task<List<Order>> GetPendingOrders()
+        public async Task<List<Order>> GetPendingOrdersAsync()
         {
             try
             {
@@ -210,5 +210,9 @@ namespace Martiello.Infrastructure.Repository
                 throw;
             }
         }
+
+
+
+
     }
 }

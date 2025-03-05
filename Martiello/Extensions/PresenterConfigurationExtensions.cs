@@ -16,7 +16,7 @@ namespace Martiello.Extensions
             });
 
             services.AddOptions();
-            services.AddScoped<IPresenter, Presenter>(); // Mudei para Scoped para manter consistência
+            services.AddScoped<IPresenter, Presenter>();
 
             PresenterOptions options = new PresenterOptions();
             configureOptions?.Invoke(options);
