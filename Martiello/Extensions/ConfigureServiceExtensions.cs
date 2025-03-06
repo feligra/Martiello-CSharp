@@ -2,8 +2,6 @@
 using Martiello.Application.Services;
 using Martiello.Domain.Interface.Repository;
 using Martiello.Domain.Interface.Service;
-using Martiello.Domain.UseCase;
-using Martiello.Domain.UseCase.Interface;
 using Martiello.Infrastructure.Data;
 using Martiello.Infrastructure.Repository;
 using Microsoft.OpenApi.Models;
@@ -22,9 +20,16 @@ namespace Martiello.Extensions
         }
         public static void ConfigureServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddControllers();
+            services.AddWebApi(configuration);
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(ConfigureSwagger);
+            services.AddPresenter(o =>
+            {
+                o.WrapResult = true;
+                o.ResultKeyDescription = "Resposta";
+                o.ErrorKeyDescription = "Erros";
+                o.ErrorCodeKeyDescription = "Codigo";
+            });
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             // Database
@@ -42,7 +47,6 @@ namespace Martiello.Extensions
             services.AddScoped<IMercadoPagoService, MercadoPagoService>();
             services.AddScoped<OrderStatusUpdaterService>();
             services.AddHostedService<OrderStatusBackgroundService>();
-            services.AddScoped<IPresenter, Presenter>();
         }
         private static void ConfigureSwagger(SwaggerGenOptions options)
         {

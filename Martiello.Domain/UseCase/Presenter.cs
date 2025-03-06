@@ -1,47 +1,142 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Martiello.Domain.UseCase.Interface;
+﻿using System.Dynamic;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Martiello.Domain.UseCase
 {
     public class Presenter : IPresenter
     {
-        private readonly IServiceProvider _serviceProvider;
+        private readonly IMediator _mediator;
+        private readonly PresenterOptions _options;
 
-        public Presenter(IServiceProvider serviceProvider)
+        public Presenter(IMediator mediator, IOptions<PresenterOptions> options)
         {
-            _serviceProvider = serviceProvider;
+            _mediator = mediator;
+            _options = options.Value;
         }
 
-        public async Task<IActionResult> Ok(IUseCaseInput input)
+        public PresenterOptions Options { get { return _options; } }
+
+        public async Task<IActionResult> Accepted(IUseCaseInput input)
         {
-            var useCaseType = typeof(IUseCase<>).MakeGenericType(input.GetType());
-            var useCase = _serviceProvider.GetService(useCaseType) as dynamic;
+            Output output = await _mediator.Send(input);
 
-            if (useCase == null)
+            if (output.ErrorCode != null)
             {
-                return new NotFoundObjectResult($"No use case found for input type {input.GetType().Name}");
+                return CreateErrorResult(output);
             }
 
-            var output = await useCase.ExecuteAsync((dynamic)input) as IUseCaseOutput;
-
-            if (output == null)
-            {
-                return new ObjectResult("Invalid output from use case") { StatusCode = 500 };
-            }
-
-            return output.StatusCode switch
-            {
-                200 => new OkObjectResult(output.Result),
-                400 => new BadRequestObjectResult(output.Message),
-                404 => new NotFoundObjectResult(output.Message),
-                500 => new ObjectResult(output.Message) { StatusCode = 500 },
-                _ => new ObjectResult("Unknown status") { StatusCode = 500 }
-            };
+            return new AcceptedResult();
         }
+
+        public async Task<IActionResult> Created(IUseCaseInput input)
+        {
+            Output output = await _mediator.Send(input);
+
+            if (output.ErrorCode != null)
+            {
+                return CreateErrorResult(output);
+            }
+
+            return new CreatedResult(string.Empty, GetResult(output));
+        }
+
+        public async Task<IActionResult> Custom(IUseCaseInput input, int statusCode)
+        {
+            Output output = await _mediator.Send(input);
+
+            if (output.ErrorCode != null)
+            {
+                return CreateErrorResult(output);
+            }
+
+            return new CustomStatusCodeObjectResult(statusCode, GetResult(output));
+        }
+
+        public async Task<IActionResult> NoContent(IUseCaseInput input)
+        {
+            Output output = await _mediator.Send(input);
+
+            if (output.ErrorCode != null)
+            {
+                return CreateErrorResult(output);
+            }
+
+            return new NoContentResult();
+        }
+
+        public async Task<IActionResult> OK(IUseCaseInput input)
+        {
+            Output output = await _mediator.Send(input);
+
+            if (output.ErrorCode != null)
+            {
+                return CreateErrorResult(output);
+            }
+
+            return new OkObjectResult(GetResult(output));
+        }
+
+        private object GetResult(Output output)
+        {
+            if (_options.WrapResult)
+            {
+                if (_options.ResultKeyDescription != "Result")
+                {
+                    dynamic result = new ExpandoObject();
+                    IDictionary<string, object> finalResult = result;
+
+                    finalResult.Add(_options.ResultKeyDescription, output.Result);
+                    return result;
+                }
+                return output;
+            }
+
+            return output.Result;
+        }
+
+        private object GetErrorResult(Output output)
+        {
+            dynamic result = new ExpandoObject();
+            IDictionary<string, object> finalResult = result;
+
+            finalResult.Add(_options.ErrorKeyDescription, output.Errors);
+
+            if (output.Result != null)
+            {
+                finalResult.Add(_options.ResultKeyDescription, output.Result);
+            }
+
+            if (output.ErrorCode.HasValue)
+            {
+                finalResult.Add(_options.ErrorCodeKeyDescription, output.ErrorCode.Value);
+            }
+
+            return result;
+        }
+
+        private IActionResult CreateErrorResult(Output output)
+        {
+            switch (output.ErrorCode)
+            {
+                case ErrorCode.NotFound:
+                    return new NotFoundObjectResult(GetErrorResult(output));
+                case ErrorCode.Business:
+                    return new UnprocessableEntityObjectResult(GetErrorResult(output));
+                case ErrorCode.Unauthorized:
+                    return new UnauthorizedObjectResult(GetErrorResult(output));
+                case ErrorCode.InternalServerError:
+                    return new CustomStatusCodeObjectResult(500, GetErrorResult(output));
+                case ErrorCode.Conflict:
+                    return new ConflictObjectResult(GetErrorResult(output));
+                case ErrorCode.ServiceUnavailable:
+                    return new ServiceUnavailableObjectResult(GetErrorResult(output));
+                default:
+                    return new BadRequestObjectResult(GetErrorResult(output));
+            }
+        }
+
+
     }
 }

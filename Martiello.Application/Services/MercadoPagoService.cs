@@ -8,18 +8,22 @@ namespace Martiello.Application.Services
 {
     public class MercadoPagoService : IMercadoPagoService
     {
-
+        private readonly bool UseMercadoPago;
         public MercadoPagoService(IConfiguration configuration)
         {
-            var accessToken = configuration["MercadoPago:AccessToken"];
+            string accessToken = configuration["MercadoPago:AccessToken"];
+            UseMercadoPago = bool.Parse(configuration["MercadoPago:UseApi"]);
             MercadoPagoConfig.AccessToken = accessToken;
         }
 
         public async Task<string> CreatePaymentAsync(decimal amount, string description)
         {
-            var request = new PreferenceRequest
+            if (UseMercadoPago)
             {
-                Items = new List<PreferenceItemRequest>
+
+                PreferenceRequest request = new PreferenceRequest
+                {
+                    Items = new List<PreferenceItemRequest>
                 {
                      new PreferenceItemRequest
                      {
@@ -29,11 +33,17 @@ namespace Martiello.Application.Services
                          UnitPrice = amount
                      }
                 }
-            };
+                };
 
-            Preference preference = await new PreferenceClient().CreateAsync(request);
+                Preference preference = await new PreferenceClient().CreateAsync(request);
 
-            return preference.InitPoint; 
+                return preference.InitPoint;
+            }
+            else
+            {
+                string randomString = new string(Enumerable.Repeat("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", 500).Select(s => s[new Random().Next(s.Length)]).ToArray());
+                return randomString;
+            }
         }
     }
 }

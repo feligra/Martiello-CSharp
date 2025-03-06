@@ -1,5 +1,5 @@
 ﻿using Martiello.Domain.Enums;
-using Martiello.Domain.UseCase.Interface;
+using Martiello.Domain.UseCase;
 
 namespace Martiello.Application.UseCases.Product.CreateProduct
 {

@@ -3,7 +3,7 @@ using Martiello.Domain.UseCase;
 
 namespace Martiello.Application.UseCases.Product.GetProductById
 {
-    public class GetProductByIdOutput : UseCaseOutput
+    public class GetProductByIdOutput : IUseCaseOutput
     {
         public ProductDTO Product { get; set; }
         public GetProductByIdOutput(ProductDTO product)

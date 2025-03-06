@@ -2,6 +2,6 @@
 
 namespace Martiello.Application.UseCases.Customer.CreateCustomer
 {
-    public class CreateCustomerOutput : UseCaseOutput
+    public class CreateCustomerOutput : IUseCaseOutput
     { }
 }

@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using Martiello.Domain.Interface.Repository;
 using Martiello.Domain.UseCase;
-using Martiello.Domain.UseCase.Interface;
 using Microsoft.Extensions.Logging;
 
 namespace Martiello.Application.UseCases.Product.UpdateProduct
@@ -22,26 +21,28 @@ namespace Martiello.Application.UseCases.Product.UpdateProduct
             _logger = logger;
         }
 
-        public async Task<IUseCaseOutput> ExecuteAsync(UpdateProductInput input)
+        public async Task<Output> Handle(UpdateProductInput request, CancellationToken cancellationToken)
         {
             try
             {
-                Domain.Entity.Product existingProduct = await _productRepository.GetProductByIdAsync(input.Id);
+                OutputBuilder output = OutputBuilder.Create();
+
+                Domain.Entity.Product existingProduct = await _productRepository.GetProductByIdAsync(request.Id);
                 if (existingProduct == null)
                 {
-                    _logger.LogWarning("Product not found with ID {Id}", input.Id);
-                    return UseCaseOutput.Output().NotFound($"Product with ID {input.Id} not found.");
+                    _logger.LogWarning("Product not found with ID {Id}", request.Id);
+                    return output.WithError($"Product with ID {request.Id} not found.").NotFoundError();
                 }
 
-                _mapper.Map(input, existingProduct);
+                _mapper.Map(request, existingProduct);
                 await _productRepository.UpdateProductAsync(existingProduct);
                 _logger.LogInformation("Product updated successfully with ID {Id}", existingProduct.Id);
-                return UseCaseOutput.Output(existingProduct).Ok();
+                return output.WithResult(new UpdateProductOutput(existingProduct)).Response();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while updating product with ID {Id}.", input.Id);
-                return UseCaseOutput.Output().InternalServerError("An error occurred while updating the product.");
+                _logger.LogError(ex, "Error while updating product with ID {Id}.", request.Id);
+                return OutputBuilder.Create().WithError("An error occurred while updating the product.").InternalServerError();
             }
         }
     }

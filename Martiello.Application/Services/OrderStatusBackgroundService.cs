@@ -23,7 +23,26 @@ namespace Martiello.Application.Services
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            bool isServiceEnabled = false;
+            string isEnabledString = _configuration["OrderProcessing:UseProcessing"];
+
             _logger.LogInformation("OrderStatusBackgroundService is starting.");
+            if (!string.IsNullOrEmpty(isEnabledString))
+            {
+                bool.TryParse(isEnabledString, out isServiceEnabled);
+            }
+
+            if (!isServiceEnabled)
+            {
+                _logger.LogInformation("OrderStatusBackgroundService is disabled in configuration. Service will not process orders.");
+                while (!stoppingToken.IsCancellationRequested)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(60), stoppingToken);
+                }
+
+                _logger.LogInformation("OrderStatusBackgroundService is stopping.");
+                return;
+            }
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -32,14 +51,11 @@ namespace Martiello.Application.Services
                     using IServiceScope scope = _serviceProvider.CreateScope();
                     IOrderRepository orderRepository = scope.ServiceProvider.GetRequiredService<IOrderRepository>();
                     OrderStatusUpdaterService orderStatusUpdater = scope.ServiceProvider.GetRequiredService<OrderStatusUpdaterService>();
-
-                    List<Domain.Entity.Order> pendingOrders = await orderRepository.GetPendingOrders();
-
+                    List<Domain.Entity.Order> pendingOrders = await orderRepository.GetAllOrdersAsync();
                     foreach (Domain.Entity.Order order in pendingOrders)
                     {
                         if (stoppingToken.IsCancellationRequested)
                             break;
-
                         _logger.LogInformation("Processing order {OrderId}.", order.Id);
                         await orderStatusUpdater.UpdateOrderStatusAsync(order);
                     }
@@ -48,13 +64,10 @@ namespace Martiello.Application.Services
                 {
                     _logger.LogError(ex, "Error occurred while processing orders.");
                 }
-
                 string checkIntervalString = _configuration["OrderProcessing:CheckIntervalInSeconds"];
                 int checkInterval = string.IsNullOrEmpty(checkIntervalString) ? 30 : int.Parse(checkIntervalString);
-
                 await Task.Delay(TimeSpan.FromSeconds(checkInterval), stoppingToken);
             }
-
             _logger.LogInformation("OrderStatusBackgroundService is stopping.");
         }
     }

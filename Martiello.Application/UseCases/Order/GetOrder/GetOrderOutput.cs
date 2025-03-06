@@ -3,7 +3,7 @@ using Martiello.Domain.UseCase;
 
 namespace Martiello.Application.UseCases.Order.GetOrder
 {
-    public class GetOrderOutput : UseCaseOutput
+    public class GetOrderOutput : IUseCaseOutput
     {
         public IEnumerable<OrderDTO> Orders { get; set; }
 

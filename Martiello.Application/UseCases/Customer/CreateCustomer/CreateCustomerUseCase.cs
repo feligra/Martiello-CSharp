@@ -2,7 +2,6 @@
 using Martiello.Application.Extensions;
 using Martiello.Domain.Interface.Repository;
 using Martiello.Domain.UseCase;
-using Martiello.Domain.UseCase.Interface;
 using Microsoft.Extensions.Logging;
 
 namespace Martiello.Application.UseCases.Customer.CreateCustomer
@@ -23,55 +22,59 @@ namespace Martiello.Application.UseCases.Customer.CreateCustomer
             _logger = logger;
         }
 
-        public async Task<IUseCaseOutput> ExecuteAsync(CreateCustomerInput input)
+
+        public async Task<Output> Handle(CreateCustomerInput request, CancellationToken cancellationToken)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(input.Name) || string.IsNullOrWhiteSpace(input.Email) || input.Document == 0)
+                OutputBuilder output = OutputBuilder.Create();
+
+                if (string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrWhiteSpace(request.Email) || request.Document == 0)
                 {
-                    return UseCaseOutput.Output().BadRequest("Name, email, and document are required.");
+                    return output.WithError("Name, email, and document are required.").BadRequestError();
                 }
 
-                if (!input.Document.IsValidCpf())
+                if (!request.Document.IsValidCpf())
                 {
-                    return UseCaseOutput.Output().BadRequest("Document number is invalid.");
+                    return output.WithError("Document number is invalid.").BadRequestError();
+
                 }
 
-                Domain.Entity.Customer existingCustomer = await _customerRepository.GetCustomerByDocumentAsync(input.Document);
+                Domain.Entity.Customer existingCustomer = await _customerRepository.GetCustomerByDocumentAsync(request.Document);
 
                 if (existingCustomer != null)
                 {
                     if (!existingCustomer.Active)
                     {
-                        existingCustomer.Name = input.Name;
-                        existingCustomer.Email = input.Email;
+                        existingCustomer.Name = request.Name;
+                        existingCustomer.Email = request.Email;
                         existingCustomer.Active = true;
 
                         await _customerRepository.UpdateCustomerAsync(existingCustomer);
 
-                        _logger.LogInformation("Existing customer with document {Document} reactivated and updated.", input.Document);
-                        return UseCaseOutput.Output(new CreateCustomerOutput()).Ok();
+                        _logger.LogInformation("Existing customer with document {Document} reactivated and updated.", request.Document);
+                        return output.WithResult(new CreateCustomerOutput()).Response();
+
                     }
                     else
                     {
-                        return UseCaseOutput.Output().BadRequest("Customer with the same document already exists.");
+                        return output.WithError("Customer with the same document already exists.").BadRequestError();
                     }
                 }
 
-                Domain.Entity.Customer customer = _mapper.Map<Domain.Entity.Customer>(input);
+                Domain.Entity.Customer customer = _mapper.Map<Domain.Entity.Customer>(request);
                 customer.Active = true;
 
                 await _customerRepository.CreateCustomerAsync(customer);
 
                 _logger.LogInformation("Customer created successfully with document {Document}", customer.Document);
 
-                CreateCustomerOutput output = new CreateCustomerOutput();
-                return UseCaseOutput.Output(output).Ok();
+                return output.WithResult(new CreateCustomerOutput()).Response();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while creating customer.");
-                return UseCaseOutput.Output().InternalServerError("An error occurred while creating the customer.");
+                return OutputBuilder.Create().WithError($"An error occurred while creating the customer. {ex.Message}").BadRequestError();
             }
         }
     }

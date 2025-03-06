@@ -4,7 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Martiello.Domain.UseCase.Interface
+namespace Martiello.Domain.UseCase
 {
-    public interface IUseCaseInput { }
+    public interface IUseCaseOutput
+    {
+    }
 }

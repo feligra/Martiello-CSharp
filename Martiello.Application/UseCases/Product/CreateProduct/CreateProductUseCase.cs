@@ -1,8 +1,6 @@
 ﻿using AutoMapper;
-using Martiello.Domain.Entity;
 using Martiello.Domain.Interface.Repository;
 using Martiello.Domain.UseCase;
-using Martiello.Domain.UseCase.Interface;
 using Microsoft.Extensions.Logging;
 
 namespace Martiello.Application.UseCases.Product.CreateProduct
@@ -23,23 +21,26 @@ namespace Martiello.Application.UseCases.Product.CreateProduct
             _logger = logger;
         }
 
-        public async Task<IUseCaseOutput> ExecuteAsync(CreateProductInput input)
+        public async Task<Output> Handle(CreateProductInput request, CancellationToken cancellationToken)
         {
             try
             {
-                var product = _mapper.Map<Domain.Entity.Product>(input);
+                OutputBuilder output = OutputBuilder.Create();
+
+                Domain.Entity.Product product = _mapper.Map<Domain.Entity.Product>(request);
 
                 await _productRepository.CreateProductAsync(product);
 
                 _logger.LogInformation("Product created successfully with ID {Id}", product.Id);
 
-                return UseCaseOutput.Output(product).Ok();
+                return output.WithResult(new CreateProductOutput(product)).Response();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while creating product.");
-                return UseCaseOutput.Output().InternalServerError("An error occurred while creating the product.");
+                return OutputBuilder.Create().WithError("An error occurred while creating the product.").InternalServerError();
             }
         }
+
     }
 }

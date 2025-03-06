@@ -1,4 +1,4 @@
-﻿using Martiello.Domain.UseCase.Interface;
+﻿using Martiello.Domain.UseCase;
 
 namespace Martiello.Application.UseCases.Order.GetOrderStatus
 {

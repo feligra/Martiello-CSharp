@@ -14,6 +14,8 @@ namespace Martiello.Application.Mapping
             CreateMap<CreateProductInput, Product>().ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Category.GetDescription()));
             CreateMap<Product, ProductDTO>();
             CreateMap<UpdateProductInput, Product>().ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
+            CreateMap<Product, ProductOrderDTO>();
+
         }
     }
 }

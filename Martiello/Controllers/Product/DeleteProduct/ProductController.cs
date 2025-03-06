@@ -1,7 +1,6 @@
-﻿using Martiello.Domain.UseCase.Interface;
+﻿using Martiello.Application.UseCases.Product.DeleteProduct;
 using Martiello.Domain.UseCase;
 using Microsoft.AspNetCore.Mvc;
-using Martiello.Application.UseCases.Product.DeleteProduct;
 
 namespace Martiello.Controllers.Product.DeleteProduct
 {
@@ -23,21 +22,21 @@ namespace Martiello.Controllers.Product.DeleteProduct
         /// <returns>
         /// Retorna:
         /// - <see cref="DeleteProductOutput"/> com status 200 (OK) quando o produto for deletado.
-        /// - <see cref="UseCaseOutput"/> com status 400 (Bad Request) caso os dados fornecidos sejam inválidos.
-        /// - <see cref="UseCaseOutput"/> com status 404 (Not Found) caso o produto não seja encontrado.
-        /// - <see cref="UseCaseOutput"/> com status 500 (Internal Server Error) em caso de erro interno do servidor.
+        /// - <see cref="Output"/> com status 400 (Bad Request) caso os dados fornecidos sejam inválidos.
+        /// - <see cref="Output"/> com status 404 (Not Found) caso o produto não seja encontrado.
+        /// - <see cref="Output"/> com status 500 (Internal Server Error) em caso de erro interno do servidor.
         /// </returns>
         [HttpDelete]
         [Route("delete/{id}")]
         [ProducesResponseType(typeof(DeleteProductOutput), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(UseCaseOutput), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(UseCaseOutput), StatusCodes.Status404NotFound)]
-        [ProducesResponseType(typeof(UseCaseOutput), StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(typeof(Output), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(Output), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(Output), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DeleteProductByIdAsync([FromRoute] string id)
         {
-            var input = new DeleteProductInput(id);
+            DeleteProductInput input = new DeleteProductInput(id);
 
-            return await _presenter.Ok(input);
+            return await _presenter.OK(input);
         }
     }
 }

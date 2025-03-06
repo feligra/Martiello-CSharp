@@ -1,6 +1,5 @@
 ﻿using Martiello.Domain.Interface.Repository;
 using Martiello.Domain.UseCase;
-using Martiello.Domain.UseCase.Interface;
 using Microsoft.Extensions.Logging;
 
 
@@ -17,26 +16,28 @@ namespace Martiello.Application.UseCases.Order.UpdateOrderStatus
             _logger = logger;
         }
 
-        public async Task<IUseCaseOutput> ExecuteAsync(UpdateOrderStatusInput input)
+        public async Task<Output> Handle(UpdateOrderStatusInput request, CancellationToken cancellationToken)
         {
             try
             {
-                Domain.Entity.Order order = await _orderRepository.GetOrderByNumberAsync(input.OrderNumber);
+                OutputBuilder output = OutputBuilder.Create();
+                Domain.Entity.Order order = await _orderRepository.GetOrderByNumberAsync(request.OrderNumber);
 
                 if (order == null)
-                    return UseCaseOutput.Output().NotFound($"Order with Id {input.OrderNumber} not found.");
+                    return output.WithError($"Order with Id {request.OrderNumber} not found.").NotFoundError();
 
-                bool success = await _orderRepository.UpdateOrderStatusAsync(input.OrderNumber, input.NewStatus);
+                bool success = await _orderRepository.UpdateOrderStatusAsync(request.OrderNumber, request.NewStatus);
 
                 _logger.LogInformation("Order status updated successfully. Id: {OrderId}, NewStatus: {NewStatus}",
-                    input.OrderNumber, input.NewStatus);
+                    request.OrderNumber, request.NewStatus);
 
-                return UseCaseOutput.Output().Ok();
+
+                return output.WithResult(new UpdateOrderStatusOutput()).Response();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while updating order status.");
-                return UseCaseOutput.Output().InternalServerError("An error occurred while updating the order status.");
+                return OutputBuilder.Create().WithError($"An error occurred while updating the order status. {ex.Message}").InternalServerError();
             }
         }
     }

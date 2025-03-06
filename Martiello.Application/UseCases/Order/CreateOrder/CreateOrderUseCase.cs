@@ -1,10 +1,10 @@
 ﻿using AutoMapper;
 using Martiello.Application.Extensions;
+using Martiello.Domain.DTO;
 using Martiello.Domain.Extension;
 using Martiello.Domain.Interface.Repository;
 using Martiello.Domain.Interface.Service;
 using Martiello.Domain.UseCase;
-using Martiello.Domain.UseCase.Interface;
 using Microsoft.Extensions.Logging;
 
 namespace Martiello.Application.UseCases.Order.CreateOrder
@@ -34,25 +34,37 @@ namespace Martiello.Application.UseCases.Order.CreateOrder
             _logger = logger;
         }
 
-        public async Task<IUseCaseOutput> ExecuteAsync(CreateOrderInput input)
+        public async Task<Output> Handle(CreateOrderInput request, CancellationToken cancellationToken)
         {
             try
             {
+                OutputBuilder output = OutputBuilder.Create();
                 List<Domain.Entity.Product> products = await _productRepository.GetAllProductsAsync();
 
-                IEnumerable<Domain.Entity.Product> orderProducts = products.Where(p => input.ProductIds.Contains(p.Id));
+                List<Domain.Entity.Product> orderProducts = new List<Domain.Entity.Product>();
+
+                foreach (string productId in request.ProductIds)
+                {
+                    Domain.Entity.Product product = products.FirstOrDefault(p => p.Id == productId);
+                    if (product != null)
+                    {
+                        orderProducts.Add(product);
+                    }
+                }
 
                 if (!orderProducts.Any())
-                    return UseCaseOutput.Output().BadRequest("No valid products found for the order.");
+                    return output.WithError("No valid products found for the order.").BadRequestError();
 
                 Domain.Entity.Customer customer = new Domain.Entity.Customer();
                 Domain.Entity.Order order;
-                if (input.CustomerDocument.HasValue)
+
+                if (request.CustomerDocument.HasValue)
                 {
-                    if (input.CustomerDocument.Value.IsValidCpf())
-                        customer = await _customerRepository.GetCustomerByDocumentAsync(input.CustomerDocument.Value);
+                    long document = request.CustomerDocument.Value;
+                    if (document.IsValidCpf())
+                        customer = await _customerRepository.GetCustomerByDocumentAsync(document);
                     else
-                        return UseCaseOutput.Output().BadRequest("Document number is invalid.");
+                        return output.WithError("Document number is invalid.").BadRequestError();
 
                     order = new Domain.Entity.Order(customer, orderProducts);
                 }
@@ -62,22 +74,21 @@ namespace Martiello.Application.UseCases.Order.CreateOrder
                 }
 
                 await _orderRepository.CreateOrderAsync(order);
-
                 _logger.LogInformation("Order created successfully with ID {Id}", order.Id);
 
                 string orderName = $"Pedido #{new Random().Next(1000000, 99999999)}";
                 string paymentLink = await _mercadoPagoService.CreatePaymentAsync(order.TotalPrice, orderName);
-
                 string qrCodeBase64 = Convert.ToBase64String(paymentLink.ToQRCode());
                 string qrCode = $"data:image/png;base64,{qrCodeBase64}";
 
-                CreateOrderOutput output = new CreateOrderOutput(order.Number, order.Status, qrCode);
-                return UseCaseOutput.Output(output).Ok();
+                List<ProductOrderDTO> productOrderDTO = orderProducts.Select(product => _mapper.Map<ProductOrderDTO>(product)).ToList();
+
+                return output.WithResult(new CreateOrderOutput(order.Number, order.Status, productOrderDTO, qrCode)).Response();
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while creating order.");
-                return UseCaseOutput.Output().InternalServerError("An error occurred while creating the order.");
+                return OutputBuilder.Create().WithError($"An error occurred while creating the order. {ex.Message}").InternalServerError();
             }
         }
     }

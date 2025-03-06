@@ -1,6 +1,5 @@
 ﻿using Martiello.Application.UseCases.Order.UpdateOrderStatus;
 using Martiello.Domain.UseCase;
-using Martiello.Domain.UseCase.Interface;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Martiello.Controllers.Order.UpdateOrderStatus
@@ -22,21 +21,21 @@ namespace Martiello.Controllers.Order.UpdateOrderStatus
         /// <param name="orderInput">Os dados necessários para a atualização do pedido.</param>
         /// <returns>
         /// Retorna:
-        /// - <see cref="UpdateOrderStatusOutput"/> com status 201 (Created) quando o pedido for criado com sucesso.
-        /// - <see cref="UseCaseOutput"/> com status 400 (Bad Request) caso os dados fornecidos sejam inválidos ou não seja possível processar o pedido.
-        /// - <see cref="UseCaseOutput"/> com status 500 (Internal Server Error) em caso de erro interno do servidor.
+        /// - <see cref="UpdateOrderStatusOutput"/> com status 202 (Accepted) quando o pedido for atualizado com sucesso.
+        /// - <see cref="Output"/> com status 400 (Bad Request) caso os dados fornecidos sejam inválidos ou não seja possível processar o pedido.
+        /// - <see cref="Output"/> com status 500 (Internal Server Error) em caso de erro interno do servidor.
         /// </returns>
         [HttpPut]
         [Route("update/status")]
-        [ProducesResponseType(typeof(UpdateOrderStatusOutput), StatusCodes.Status201Created)]
-        [ProducesResponseType(typeof(UseCaseOutput), StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(typeof(UseCaseOutput), StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> CreateOrderAsync([FromBody] UpdateOrderStatusInput orderInput)
+        [ProducesResponseType(typeof(UpdateOrderStatusOutput), StatusCodes.Status202Accepted)]
+        [ProducesResponseType(typeof(Output), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(Output), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpdateOrderStatusAsync([FromBody] UpdateOrderStatusInput orderInput)
         {
             if (!ModelState.IsValid)
                 return BadRequest();
 
-            return await _presenter.Ok(orderInput);
+            return await _presenter.OK(orderInput);
         }
     }
 }

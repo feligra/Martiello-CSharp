@@ -1,5 +1,5 @@
 ﻿using Martiello.Application.UseCases.Customer.CreateCustomer;
-using Martiello.Domain.UseCase.Interface;
+using Martiello.Domain.UseCase;
 
 namespace Martiello.Application.UseCases.Order.CreateOrder
 {
