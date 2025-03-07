@@ -1,0 +1,29 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: martiello-api-hpa
+spec:
+  # Referência ao deployment que será escalado
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: martiello-api
+  # Configurações de escala
+  minReplicas: 1
+  maxReplicas: 5
+  # Métricas para escalonamento
+  metrics:
+    # Escala baseada em CPU
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    # Escala baseada em Memória
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80

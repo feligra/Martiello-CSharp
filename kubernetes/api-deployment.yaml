@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: martiello-api
+  labels:
+    app: martiello-api
+spec:
+  # Número inicial de réplicas
+  replicas: 1
+  selector:
+    matchLabels:
+      app: martiello-api
+  template:
+    metadata:
+      labels:
+        app: martiello-api
+    spec:
+      containers:
+        - name: api
+          image: martiello-api:latest
+          imagePullPolicy: Never
+          # Porta que a aplicação expõe
+          ports:
+            - containerPort: 5000
+              name: http
+          # Recursos mínimos e máximos
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          # Configurações de ambiente da aplicação
+          envFrom:
+            - configMapRef:
+                name: api-config
+          # Variáveis sensíveis do banco de dados
+          env:
+            - name: ConnectionStrings__MongoDb
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-secret
+                  key: connection-string
+          # Verificação de saúde da aplicação
+          livenessProbe:
+            httpGet:
+              path: /swagger
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /swagger
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 5
