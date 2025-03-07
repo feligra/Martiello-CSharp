@@ -127,6 +127,20 @@ O `kubectl` é a ferramenta de linha de comando para interagir com clusters Kube
 kubectl apply -f arquivo.yaml
 ```
 
+Aplcando todos os manifestos
+
+```bash
+# Aplicar ConfigMaps e Secrets
+kubectl apply -f kubernetes/api-configmap.yaml
+kubectl apply -f kubernetes/db-secrets.yaml
+
+# Aplicar Deployment e Service
+kubectl apply -f kubernetes/api-deployment.yaml
+kubectl apply -f kubernetes/api-service.yaml
+kubectl apply -f kubernetes/api-hpa.yaml
+kubectl apply -f kubernetes/ingress.yaml
+```
+
 **Função**: Cria ou atualiza recursos no cluster.
 
 2. **Verificar status dos pods**:
