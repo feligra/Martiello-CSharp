@@ -39,7 +39,12 @@ spec:
           volumeMounts:
             - name: mongodb-data
               mountPath: /data/db
-      # Usando emptyDir em vez de PVC temporariamente
-      volumes:
-        - name: mongodb-data
-          emptyDir: {}
+  # Configuração do volume persistente
+  volumeClaimTemplates:
+    - metadata:
+        name: mongodb-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
