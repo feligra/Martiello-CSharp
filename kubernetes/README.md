@@ -130,15 +130,19 @@ kubectl apply -f arquivo.yaml
 Aplcando todos os manifestos
 
 ```bash
-# Aplicar ConfigMaps e Secrets
+# 1. Primeiro os ConfigMaps e Secrets
 kubectl apply -f kubernetes/api-configmap.yaml
+kubectl apply -f kubernetes/db-configmap.yaml
 kubectl apply -f kubernetes/db-secrets.yaml
 
-# Aplicar Deployment e Service
+# 2. Depois o MongoDB (StatefulSet e Service)
+kubectl apply -f kubernetes/db-statefulset.yaml
+kubectl apply -f kubernetes/db-service.yaml
+
+# 3. Por fim, a API (Deployment, Service e HPA)
 kubectl apply -f kubernetes/api-deployment.yaml
 kubectl apply -f kubernetes/api-service.yaml
 kubectl apply -f kubernetes/api-hpa.yaml
-kubectl apply -f kubernetes/ingress.yaml
 ```
 
 **Função**: Cria ou atualiza recursos no cluster.
