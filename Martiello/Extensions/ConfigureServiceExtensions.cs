@@ -42,6 +42,7 @@ namespace Martiello.Extensions
             services.AddScoped<ICustomerRepository, CustomerRepository>();
             services.AddScoped<IProductRepository, ProductRepository>();
             services.AddScoped<IOrderRepository, OrderRepository>();
+            services.AddScoped<IPaymentRepository, PaymentRepository>();
 
             // Services
             services.AddScoped<IMercadoPagoService, MercadoPagoService>();

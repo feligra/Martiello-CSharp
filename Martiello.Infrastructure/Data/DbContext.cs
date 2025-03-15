@@ -16,6 +16,7 @@ namespace Martiello.Infrastructure.Data
         public IMongoCollection<Customer> Customers => _database.GetCollection<Customer>("Customers");
         public IMongoCollection<Order> Orders => _database.GetCollection<Order>("Orders");
         public IMongoCollection<Product> Products => _database.GetCollection<Product>("Products");
+        public IMongoCollection<Payment> Payment => _database.GetCollection<Payment>("Payment");
 
     }
 }

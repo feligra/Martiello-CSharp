@@ -1,7 +1,9 @@
-﻿namespace Martiello.Domain.Interface.Service
+﻿using Martiello.Domain.Entity;
+
+namespace Martiello.Domain.Interface.Service
 {
     public interface IMercadoPagoService
     {
-        Task<string> CreatePaymentAsync(decimal amount, string description);
+        Task<string> CreatePaymentAsync(Order order, string description);
     }
 }

@@ -77,7 +77,7 @@ namespace Martiello.Application.UseCases.Order.CreateOrder
                 _logger.LogInformation("Order created successfully with ID {Id}", order.Id);
 
                 string orderName = $"Pedido #{new Random().Next(1000000, 99999999)}";
-                string paymentLink = await _mercadoPagoService.CreatePaymentAsync(order.TotalPrice, orderName);
+                string paymentLink = await _mercadoPagoService.CreatePaymentAsync(order, orderName);
                 string qrCodeBase64 = Convert.ToBase64String(paymentLink.ToQRCode());
                 string qrCode = $"data:image/png;base64,{qrCodeBase64}";
 
