@@ -14,6 +14,6 @@ namespace Martiello.Domain.Interface.Repository
         Task<List<Order>> GetOrdersByDocumentAsync(long document);
         Task<bool> UpdateOrderStatusAsync(long number, OrderStatus status);
         Task<List<Order>> GetPendingOrdersAsync();
-        Task<List<Order>> GetAllOrdersAsync();
+        Task<List<Order>> GetAllOrdersAsync(bool filterStatus = false);
     }
 }

@@ -29,12 +29,12 @@ namespace Martiello.Controllers.Order.GetAllOrders
         [ProducesResponseType(typeof(GetAllOrdersOutput), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Output), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(Output), StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetAllOrderAsync()
+        public async Task<IActionResult> GetAllOrderAsync([FromQuery] bool filter = false)
         {
             if (!ModelState.IsValid)
                 return BadRequest();
 
-            return await _presenter.OK(new GetAllOrdersInput());
+            return await _presenter.OK(new GetAllOrdersInput(filter));
         }
     }
 }

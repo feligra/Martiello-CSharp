@@ -88,11 +88,22 @@ namespace Martiello.Infrastructure.Repository
             }
         }
 
-        public async Task<List<Order>> GetAllOrdersAsync()
+        public async Task<List<Order>> GetAllOrdersAsync(bool filterStatus = false)
         {
             try
             {
-                return await _orders.Find(_ => true).ToListAsync();
+                var filter = Builders<Order>.Filter.Empty;
+                if (filterStatus) { 
+                    List<string> statusPermitidos =
+                    [
+                        OrderStatus.Received.GetDescription(),
+                        OrderStatus.InPreparation.GetDescription(),
+                        OrderStatus.Ready.GetDescription()
+                    ];
+                    filter = Builders<Order>.Filter.In(o => o.Status, statusPermitidos.Select(s => s.ToString()).ToList()); ;
+                }
+                var sort = Builders<Order>.Sort.Ascending(o => o.Status).Ascending(o => o.CreatedAt);
+                return await _orders.Find(filter).Sort(sort).ToListAsync();
             }
             catch (Exception ex)
             {

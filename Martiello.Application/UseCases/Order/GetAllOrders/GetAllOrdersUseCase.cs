@@ -26,7 +26,7 @@ namespace Martiello.Application.UseCases.Order.GetAllOrders
             {
                 OutputBuilder output = OutputBuilder.Create();
 
-                List<Domain.Entity.Order> orders = await _orderRepository.GetAllOrdersAsync();
+                List<Domain.Entity.Order> orders = await _orderRepository.GetAllOrdersAsync(request.FilterStatus);
 
                 if (orders == null || !orders.Any())
                     return output.WithError("No orders found.").NotFoundError();
