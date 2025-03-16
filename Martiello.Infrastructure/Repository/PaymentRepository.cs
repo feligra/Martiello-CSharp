@@ -4,12 +4,6 @@ using Martiello.Domain.Interface.Repository;
 using Martiello.Infrastructure.Data;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Martiello.Infrastructure.Repository
 {
@@ -32,41 +26,37 @@ namespace Martiello.Infrastructure.Repository
             }
         }
 
-        public async Task<Payment> GetPaymentAsync(Payment payment) {
+        public async Task<Payment> GetPaymentByOrderAsync(int orderNumber) {
             try {
-                Payment? paymentResponse = await _payment.Find(p => p.OrderNumber == payment.OrderNumber).FirstOrDefaultAsync();
+                Payment? paymentResponse = await _payment.Find(p => p.OrderNumber == orderNumber).FirstOrDefaultAsync();
                 if (paymentResponse == null) {
-                    _logger.LogWarning("Payment with ID {OrderNumber} not found.", payment.OrderNumber);
+                    _logger.LogWarning("Payment with ID {orderNumber} not found.", orderNumber);
                 }
-                _logger.LogInformation("Payment for order {OrderNumber} created", payment.OrderNumber);
+                _logger.LogInformation("Payment for order {orderNumber} created", orderNumber);
                 return paymentResponse;
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error while retrieving payment for order {OrderNumber}.", payment.OrderNumber);
+                _logger.LogError(ex, "Error while retrieving payment for order {orderNumber}.", orderNumber);
                 throw;
             }
         }
 
-        public async Task UpdatePaymentAsync(Payment payment) {
+        public async Task<List<Payment>> GetPaymentByStatusAsync(PaymentStatus status) {
             try {
-                FilterDefinition<Payment> filter = Builders<Payment>.Filter.And(
-                    Builders<Payment>.Filter.Eq(o => o.OrderNumber, payment.OrderNumber),
-                    Builders<Payment>.Filter.Exists("status")
-                );
-                UpdateDefinition<Payment> update = Builders<Payment>
-                    .Update
-                    .Set(o => o, payment)
-                    .Set(o => o.UpdatedAt, DateTime.UtcNow);
-                await _payment.UpdateOneAsync(filter, update);
-                _logger.LogInformation("Payment for order {OrderNumber} updated", payment.OrderNumber);
+                List<Payment>? paymentResponse = await _payment.Find(p => p.Status == status).ToListAsync();
+                if (paymentResponse == null) {
+                    _logger.LogWarning("Payment with ID {status} not found.", status);
+                }
+                _logger.LogInformation("Payment for order {status} created", status);
+                return paymentResponse;
             }
             catch (Exception ex) {
-                _logger.LogError(ex, "Error while update payment for order {OrderNumber}.", payment.OrderNumber);
+                _logger.LogError(ex, "Error while retrieving payment for order {status}.", status);
                 throw;
             }
         }
 
-        public async Task UpdateStatusPaymentAsync(int orderNumber, PaymentStatus status) {
+        public async Task UpdatePaymentStatusAsync(int orderNumber, PaymentStatus status) {
             try {
                 FilterDefinition<Payment> filter = Builders<Payment>.Filter.And(
                     Builders<Payment>.Filter.Eq(o => o.OrderNumber, orderNumber),

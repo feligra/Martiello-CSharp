@@ -1,9 +1,8 @@
-﻿using Martiello.Application.UseCases.Order.GetAllOrders;
-using Martiello.Application.UseCases.Payment.CreatePayment;
+﻿using Martiello.Application.UseCases.Payment.UpdatePaymentStatus;
 using Martiello.Domain.UseCase;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Martiello.Controllers.Order.GetAllOrders {
+namespace Martiello.Controllers.Paymemt.UpdatePaymentByStatus {
     [ApiController]
     [Route("api/payment")]
     public class PaymentController : ControllerBase {
@@ -14,19 +13,20 @@ namespace Martiello.Controllers.Order.GetAllOrders {
         }
 
         /// <summary>
-        /// Recupera todos os pedidos feitos.
+        /// Atualiza o status de pagamento do pedido.
         /// </summary>
         /// <returns>
         /// Retorna:
-        /// - <see cref="CreatePaymentOutput"/> com status 200 (OK) quando o/os pedido/os é/sâo encontrado/dos.
-        /// - <see cref="Output"/> com status 404 (Not Found) caso não tenha encontrado pedidos.
+        /// - <see cref="UpdatePaymentStatusOutput"/> com status 200 (OK) quando o pagamento é atualizado.
+        /// - <see cref="Output"/> com status 404 (Not Found) caso não tenha encontrado a ordem de pagamento.
         /// - <see cref="Output"/> com status 500 (Internal Server Error) em caso de erro interno do servidor.
         /// </returns>
-        [HttpPost]
-        [ProducesResponseType(typeof(CreatePaymentOutput), StatusCodes.Status200OK)]
+        [HttpPut]
+        [Route("update/status")]
+        [ProducesResponseType(typeof(UpdatePaymentStatusOutput), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Output), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(Output), StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> CreatePaymentAsync([FromBody] CreatePaymentInput request) {
+        public async Task<IActionResult> UpdatePaymentStatusAsync([FromBody] UpdatePaymentStatusInput request) {
             if (!ModelState.IsValid)
                 return BadRequest();
 

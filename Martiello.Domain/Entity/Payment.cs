@@ -15,14 +15,14 @@ namespace Martiello.Domain.Entity {
         [BsonIgnoreIfNull]
         public Customer Customer { get; set; }
 
-        [BsonElement("qrcode")]
-        public string Qrcode { get; set; }
+        [BsonElement("link")]
+        public string Link { get; set; }
 
-        public Payment(int orderNumber, Customer customer, PaymentStatus status, string qrcode) {
+        public Payment(int orderNumber, Customer customer, PaymentStatus status, string link) {
             OrderNumber = orderNumber;
             Customer = customer;
             Status = status;
-            Qrcode = qrcode;
+            Link = link;
         }
 
     }
