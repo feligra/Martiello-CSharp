@@ -1,23 +1,38 @@
-## 🐳 Kubernetes e Infraestrutura
+# 🐳 Arquitetura em Kubernetes - Martiello
 
-### O que é Kubernetes?
+## Sobre esta Documentação
 
-Kubernetes (também conhecido como K8s) é uma plataforma de código aberto para automação de implantação, dimensionamento e gerenciamento de aplicações em containers. Ele foi projetado para:
+Esta documentação detalha a infraestrutura em Kubernetes do sistema **Martiello**, atendendo aos requisitos do **Tech Challenge Fase 02**. O objetivo é suportar uma lanchonete em expansão, garantindo escalabilidade, segurança e eficiência no gerenciamento de pedidos de autoatendimento. Abaixo, descrevemos a arquitetura implantada, os manifestos YAML, os comandos necessários e as boas práticas aplicadas, alinhados ao problema do negócio e aos requisitos técnicos.
 
-1. **Automação**: Gerencia automaticamente a implantação e atualização de aplicações
-2. **Escalabilidade**: Permite escalar aplicações horizontalmente
-3. **Resiliência**: Mantém as aplicações funcionando mesmo se alguns componentes falharem
-4. **Portabilidade**: Funciona em qualquer ambiente (local, nuvem, híbrido)
+## Visão Geral do Kubernetes
 
-### Componentes Principais do Kubernetes
+**Kubernetes (K8s)** é uma plataforma open-source para orquestração de containers, projetada para automatizar a implantação, escalabilidade e operação de aplicações. No contexto da lanchonete, ele resolve problemas como picos de demanda nos totens e falhas na aplicação, oferecendo:
+- **Escalabilidade**: Ajuste automático de recursos para atender mais clientes.
+- **Resiliência**: Recuperação rápida de falhas em pods.
+- **Gerenciamento**: Controle centralizado de serviços e banco de dados.
 
-1. **Pod**: É a menor unidade de deploy no Kubernetes. Um pod pode conter um ou mais containers.
-2. **Deployment**: Gerencia um conjunto de pods idênticos, garantindo que o número desejado de pods esteja sempre rodando.
-3. **Service**: Fornece um endpoint estável para acessar os pods.
-4. **ConfigMap**: Armazena configurações não sensíveis.
-5. **Secret**: Armazena informações sensíveis como senhas e chaves.
-6. **StatefulSet**: Gerencia pods com identidade estável e armazenamento persistente.
-7. **HorizontalPodAutoscaler (HPA)**: Escala automaticamente o número de pods baseado em métricas.
+## Componentes Utilizados
+
+1. **Pod**: Unidade básica que executa os containers da API e do MongoDB.
+2. **Deployment**: Garante que a API esteja sempre disponível com o número desejado de réplicas.
+3. **Service**: Expõe a API para os totens e a cozinha.
+4. **ConfigMap**: Armazena configurações como ambiente e nome do banco.
+5. **Secret**: Protege dados sensíveis (ex.: credenciais do MongoDB e Mercado Pago).
+6. **StatefulSet**: Gerencia o MongoDB com persistência de dados.
+7. **HorizontalPodAutoscaler (HPA)**: Escala pods da API automaticamente com base na carga.
+
+## Arquitetura Implantada
+
+### Diagrama
+```
+[Cliente/Totem] --> [Service: martiello-api-service] --> [Deployment: martiello-api]
+|                           |
+[ConfigMap/Secrets]        [Service: mongodb-service] --> [StatefulSet: mongodb]
+|                           |
+[HPA]                    [Webhook Mercado Pago]
+|
+[Kitchen Monitor]
+```
 
 ### Manifestos Kubernetes
 
@@ -261,3 +276,12 @@ eval $(minikube docker-env)
 3. **Serviço não está acessível**:
    - Verificar se o serviço está exposto: `kubectl get services`
    - Usar `minikube service nome-do-servico` para expor
+
+
+## Alinhamento com o Tech Challenge
+
+- **Escalabilidade**: HPA atende ao requisito de aumento/diminuição de pods.
+- **Segurança**: ConfigMap e Secrets separam configurações sensíveis e não sensíveis.
+- **Boas Práticas**: Uso de Deployment e Service para expor a API.
+- **Documentação**: Diagrama e instruções completas fornecidos.
+
