@@ -1,162 +1,116 @@
-# Martiello - Sistema de Gerenciamento de Lanchonete
+# Martiello - Sistema de Autoatendimento para Lanchonete
 
 ## 📝 Sobre o Projeto
 
-Martiello é uma aplicação de gerenciamento de lanchonete que permite realizar pedidos, cadastrar produtos e processar pagamentos. O sistema oferece uma experiência flexível, permitindo a criação de pedidos com ou sem identificação do cliente (CPF).
+Martiello é um sistema de autoatendimento desenvolvido para uma lanchonete em expansão, projetado para resolver problemas de controle de pedidos, como confusão entre atendentes e cozinha, atrasos e insatisfação dos clientes. A aplicação permite que clientes façam pedidos personalizados de forma eficiente, acompanhem o status em tempo real e realizem pagamentos integrados, enquanto o estabelecimento gerencia produtos, clientes e pedidos por um painel administrativo. Este projeto foi desenvolvido como parte do **Tech Challenge Fase 02**, refatorando a aplicação da Fase 01 para seguir padrões de **Clean Code** e **Clean Architecture**, além de implantar uma infraestrutura escalável em Kubernetes.
 
 ## 🚀 Funcionalidades Principais
 
-- Gerenciamento de produtos
-- Sistema de pedidos com atualização automática de status
-- Integração com Mercado Pago para pagamentos
-- Rastreamento de status do pedido em tempo real
-- Cadastro opcional de clientes
+- **Pedidos**: Interface de autoatendimento para clientes escolherem lanches, acompanhamentos e bebidas, com opção de identificação por CPF, cadastro (nome e e-mail) ou anonimato.
+- **Pagamento**: Integração com Mercado Pago via QR Code para pagamentos rápidos e confirmados por Webhook.
+- **Acompanhamento**: Monitoramento em tempo real do status do pedido (Recebido → Em Preparação → Pronto → Finalizado).
+- **Entrega**: Notificação ao cliente quando o pedido está pronto para retirada.
+- **Administração**:
+  - Gerenciamento de clientes para campanhas promocionais.
+  - Cadastro de produtos (nome, categoria, preço, descrição, imagem) em categorias fixas: Lanche, Acompanhamento, Bebida, Sobremesa.
+  - Acompanhamento de pedidos em andamento com tempo de espera.
 
-## 💻 Arquitetura
+## 💻 Arquitetura da Aplicação
 
 ### Visão Geral
-O projeto está estruturado em camadas seguindo os princípios de Clean Architecture:
-- **Martiello.Domain**: Contém as entidades e regras de negócio
-- **Martiello.Application**: Implementa os casos de uso da aplicação
-- **Martiello.Infrastructure**: Gerencia acesso a dados e serviços externos
-- **Martiello**: API principal da aplicação
+A aplicação segue os princípios de **Clean Architecture**, dividida em camadas para garantir separação de responsabilidades e manutenibilidade:
+- **Martiello.Domain**: Entidades (ex.: Pedido, Produto) e regras de negócio (ex.: validação de pedidos).
+- **Martiello.Application**: Casos de uso (UseCases) que orquestram a lógica da aplicação.
+- **Martiello.Infrastructure**: Integrações externas (MongoDB, Mercado Pago) e acesso a dados.
+- **Martiello**: API RESTful que expõe os endpoints para clientes e cozinha.
 
 ### Padrão UseCase
-O projeto implementa uma arquitetura baseada em UseCases, onde cada operação da API possui seu próprio UseCase específico, contendo três componentes principais:
+Cada operação da API é implementada como um **UseCase**, estruturado em:
+1. **Input**: Valida dados de entrada (ex.: produtos do pedido).
+2. **Output**: Define o formato de resposta (ex.: ID do pedido, status).
+3. **UseCase**: Executa a lógica de negócio, garantindo encapsulamento e testabilidade.
 
-1. **Input**
-   - Responsável por receber e validar os dados de entrada
-   - Define o contrato de dados necessários para a operação
-   - Garante que os dados estejam no formato correto antes do processamento
-
-2. **Output**
-   - Define a estrutura de retorno da operação
-   - Padroniza as respostas da aplicação
-   - Facilita o mapeamento de respostas para o cliente
-
-3. **UseCase**
-   - Contém a lógica de negócio específica da operação
-   - Implementa as regras e fluxos necessários
-   - Garante a separação de responsabilidades
-
-Esta arquitetura traz diversos benefícios:
-- Código mais organizado e manutenível
-- Separação clara de responsabilidades
-- Facilidade para implementar novos recursos
-- Melhor testabilidade
-- Evita classes de serviço grandes e acopladas
+**Benefícios**:
+- Código organizado e modular.
+- Facilidade para adicionar novas funcionalidades.
+- Alta testabilidade com mocks nos UseCases.
 
 ### Banco de Dados
-
-O MongoDB foi escolhido como banco de dados para este projeto devido a:
-- Natureza dinâmica dos pedidos
-- Flexibilidade no esquema de dados
-- Melhor performance para operações de leitura/escrita em documentos
-- Facilidade para armazenar informações complexas dos pedidos em um único documento
-- Escalabilidade horizontal
+Utilizamos o **MongoDB** por:
+- Flexibilidade para armazenar pedidos complexos como documentos únicos.
+- Escalabilidade horizontal para suportar o crescimento da lanchonete.
+- Performance otimizada em operações de leitura/escrita.
 
 ## 🔄 Sistema de Status de Pedidos
 
-O sistema atualiza automaticamente o status dos pedidos seguindo o fluxo:
-1. Recebido (1-3 minutos)
-2. Em Preparação (30s-1min)
-3. Pronto
-4. Finalizado
+O fluxo de status dos pedidos é atualizado automaticamente:
+1. **Recebido**: Quando o pedido é registrado (1-3 minutos para confirmação de pagamento).
+2. **Em Preparação**: Após pagamento aprovado (30s-1min, ajustável por multiplicador).
+3. **Pronto**: Preparação concluída, notificação enviada ao cliente.
+4. **Finalizado**: Após retirada pelo cliente.
 
-O tempo de preparação é calculado com base nos produtos do pedido, e o sistema possui um multiplicador de tempo configurável para testes.
+A cozinha utiliza esses status para priorizar pedidos, garantindo que nenhum seja perdido.
 
-## 💳 Integração Mercado Pago
+## 💳 Integração com Mercado Pago
 
-### Integração com Mercado Pago
-
-#### Configuração das Credenciais
-
-1. Acesse [Mercado Pago](https://www.mercadopago.com.br)
-2. Faça login ou crie uma nova conta
-3. Acesse a aba "Seu negócio"
-4. Vá em "Configurações"
-5. Selecione "Credenciais"
-6. Em "Credenciais de teste", você encontrará:
-   - Access Token
-   - Public Key
-7. Configure as credenciais no arquivo `appsettings.json`:
+### Configuração das Credenciais
+1. Acesse o [Mercado Pago](https://www.mercadopago.com.br/developers).
+2. Em "Credenciais", obtenha:
+   - `AccessToken` (armazenado em Secrets).
+   - `PublicKey` (armazenado em Secrets).
+3. Configure em `appsettings.json` ou via ConfigMap/Secrets no Kubernetes:
    ```json
    {
      "MercadoPago": {
-       "AccessToken": "seu_access_token",
-       "PublicKey": "sua_public_key"
+       "AccessToken": "SEU_ACCESS_TOKEN",
+       "PublicKey": "SUA_PUBLIC_KEY"
      }
    }
    ```
 
-#### Funcionalidade de Pagamento
+### Fluxo de Pagamento
+1. O cliente finaliza o pedido → API gera um QR Code via Mercado Pago.
+2. O cliente escaneia o QR Code pelo app do Mercado Pago.
+3. O Webhook recebe a confirmação de pagamento e atualiza o status para "Recebido".
+4. A cozinha inicia a preparação após a aprovação.
 
-A integração com o Mercado Pago permite:
-- Geração automática de QR Code para cada pedido
-- Pagamento rápido via aplicativo do Mercado Pago
-- Atualização em tempo real do status do pagamento
-- Experiência seamless para o cliente
+## 🏭 Arquitetura e implementação em Kubernetes
 
-Quando um pedido é criado:
-1. O sistema gera automaticamente um QR Code único
-2. O cliente pode escanear o QR Code com o app do Mercado Pago
-3. O pagamento é processado instantaneamente
-4. O sistema recebe a confirmação do pagamento e atualiza o status do pedido
+A implantação em Kubernetes está detalhada em um documento separado. Consulte a documentação completa em: [Arquitetura Kubernetes](kubernetes/README.md).
 
-## 🐳 Configuração Docker
+## 🐳 Configuração e Execução
 
 ### Pré-requisitos
 - Docker
-- Docker Compose
+- Docker Compose (para desenvolvimento local)
+- Kubernetes (Minikube ou cluster em nuvem como AKS/EKS/GKE)
+- kubectl
 
-### Passos para Execução
-
-1. Clone o repositório
+### Passos para Execução Local
+1. Clone o repositório:
    ```bash
-   git clone [url-do-repositorio]
-   ```
-
-2. Navegue até a pasta do projeto
-   ```bash
+   git clone https://github.com/feligra/Martiello-CSharp
    cd martiello
    ```
-
-3. Execute o Docker Compose
+2. Suba com Docker Compose:
    ```bash
    docker-compose up -d
    ```
-
-O docker-compose irá criar e iniciar todos os containers necessários para a aplicação, incluindo:
-- API
-- MongoDB
-- Serviços relacionados
-
-A aplicação estará disponível em `http://localhost:5000`
-
-## ⚙️ Configurações
-
-As principais configurações podem ser ajustadas no arquivo `appsettings.json`:
-
-```json
-{
-  "OrderProcessing": {
-    "UseRealTimePreparation": true
-  },
-  "ConnectionStrings": {
-    "MongoDb": "sua_connection_string_mongodb"
-  }
-}
-```
+3. Acesse o Swagger em `http://localhost:5000/swagger`.
 
 ## 📚 Documentação da API
 
-A documentação da API está disponível através do Swagger UI em:
-```
-http://localhost:5000/swagger
-```
+### Endpoints
+- **POST /api/checkout**: Cria um pedido e retorna o ID e QR Code.
+  - Exemplo: `{"produtos": [{"id": "lanche1", "quantidade": 1}], "cpf": "123.456.789-00"}`
+- **GET /api/pagamento/status/{id}**: Consulta o status do pagamento.
+- **POST /api/webhook**: Recebe confirmação do Mercado Pago.
+- **GET /api/pedidos**: Lista pedidos (ordenados: Pronto > Em Preparação > Recebido; mais antigos primeiro).
+- **PUT /api/pedidos/{id}/status**: Atualiza o status do pedido.
+
+### Collection
+- Disponível no Swagger: `http://localhost:5000/swagger`.
 
 ## 👨‍👩‍👧‍👦 Sobre o Desenvolvimento
 
-Este projeto foi desenvolvido inteiramente por mim, conciliando as responsabilidades do trabalho em período integral com a vida familiar, incluindo esposa e filhos. Apesar dos desafios de tempo e das múltiplas responsabilidades, consegui desenvolver as funcionalidades essenciais solicitadas. 
-
-Embora existam muitas possibilidades de expansão e melhorias, o projeto atende aos requisitos principais e demonstra a aplicação de boas práticas de arquitetura e desenvolvimento. Espero que os avaliadores possam compreender esse contexto pessoal ao analisar o projeto, considerando o esforço de equilibrar vida profissional, estudos e família durante o desenvolvimento.
+Desenvolvido por mim durante o Tech Challenge, conciliando trabalho em tempo integral e vida familiar (esposa e filhos). Apesar dos desafios de tempo, o projeto atende aos requisitos da Fase 02, aplicando boas práticas de Clean Code, Clean Architecture e Kubernetes. Há espaço para melhorias (ex.: mais testes unitários), mas o foco foi entregar uma solução funcional e alinhada ao problema da lanchonete.
