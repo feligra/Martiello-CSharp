@@ -12,7 +12,6 @@ namespace Martiello.Webhook
     {
         private readonly ILogger<PaymentController> _logger;
         private readonly IOrderRepository _orderRepository;
-        private readonly IConfiguration _configuration;
 
         public PaymentController(
             ILogger<PaymentController> logger,
@@ -21,55 +20,58 @@ namespace Martiello.Webhook
         {
             _logger = logger;
             _orderRepository = orderRepository;
-            _configuration = configuration;
         }
 
         [HttpPost("payment")]
         public async Task<IActionResult> PaymentConfirmation()
         {
-            _logger.LogInformation("Webhook de pagamento recebido");
+            _logger.LogInformation("Payment notification received.");
 
             try
             {
-                // 1. Ler o payload do request
                 string requestBody;
                 using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
                 {
                     requestBody = await reader.ReadToEndAsync();
                 }
+                _logger.LogInformation("Request body read successfully.");
 
-                // 2. Validar a origem da notificação (verificar se é do Mercado Pago)
-                //if (!ValidarOrigemWebhook(requestBody))
-                //{
-                //    _logger.LogWarning("Origem do webhook não validada");
-                //    return Unauthorized("Origem da notificação não autorizada");
-                //}
-
-                // 3. Processar o payload
-                MercadoPagoPaymentResponse? notificacao = JsonConvert.DeserializeObject<MercadoPagoPaymentResponse>(requestBody);
-
-                if (notificacao == null)
+                MercadoPagoPaymentResponse? notification = JsonConvert.DeserializeObject<MercadoPagoPaymentResponse>(requestBody);
+                if (notification == null)
                 {
-                    _logger.LogWarning("Notificação de pagamento recebida com formato inválido");
-                    return BadRequest("Formato de notificação inválido");
+                    _logger.LogWarning("Failed to deserialize the notification payload.");
+                    return BadRequest("Invalid payload.");
                 }
 
-                // 4. Atualizar o status do pedido
-                //var resultado = await AtualizarStatusPedido(notificacao);
+                if (string.IsNullOrEmpty(notification.Data?.Id))
+                {
+                    _logger.LogWarning("Notification data id is null or empty.");
+                    return BadRequest("Missing payment id.");
+                }
 
-                //if (!resultado)
-                //{
-                //    _logger.LogWarning("Falha ao atualizar o status do pedido. ID da notificação: {NotificationId}", notificacao.Id);
-                //    return StatusCode(500, "Falha ao processar a notificação de pagamento");
-                //}
+                if (!long.TryParse(notification.Data.Id, out long orderId))
+                {
+                    _logger.LogWarning($"Notification data id '{notification.Data.Id}' is not a valid number.");
+                    return BadRequest("Invalid payment id format.");
+                }
 
-                //_logger.LogInformation("Notificação de pagamento processada com sucesso. ID: {NotificationId}", notificacao.Id);
-                return Ok("Notificação processada com sucesso");
+                bool orderExists = await _orderRepository.GetOrderByNumberAsync(orderId) != null;
+                if (orderExists)
+                {
+                    await _orderRepository.UpdateOrderStatusAsync(orderId, Domain.Enums.OrderStatus.Received);
+                    _logger.LogInformation($"Order {orderId} status updated to Received.");
+                }
+                else
+                {
+                    _logger.LogWarning($"Order with id {orderId} not found.");
+                }
+
+                return Ok();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao processar notificação de pagamento");
-                return StatusCode(500, "Erro interno ao processar notificação");
+                _logger.LogError(ex, "Error processing payment notification.");
+                return StatusCode(500, "Internal server error.");
             }
         }
     }
