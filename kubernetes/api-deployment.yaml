@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
         - name: api
-          image: martiello-api:latest
-          imagePullPolicy: Never
+          image: limalucas99/martiello-api
+          imagePullPolicy: Always
           # Porta que a aplicação expõe
           ports:
             - containerPort: 5000

@@ -6,11 +6,12 @@ metadata:
     app: martiello-api
 spec:
   # Tipo do serviço - LoadBalancer para acesso externo
-  type: LoadBalancer
+  type: NodePort
   ports:
     # Porta externa (80) mapeada para a porta do container (5000)
     - port: 80
       targetPort: 5000
+      nodePort: 30000
       protocol: TCP
       name: http
   # Seletor para identificar os pods da API
