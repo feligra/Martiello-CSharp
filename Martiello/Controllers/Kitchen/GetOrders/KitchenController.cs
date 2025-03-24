@@ -21,14 +21,14 @@ namespace Martiello.Controllers.Kitchen.GetOrders
         /// <returns>
         /// Retorna:
         /// - <see cref="GetKitchenOrdersOutput"/> com status 200 (OK) quando o/os pedido/os é/sâo encontrado/dos.
-        /// - <see cref="Output"/> com status 404 (Not Found) caso o pedido não seja encontrado.
+        /// - <see cref="Output"/> com status 404 (Not Found) caso não existam pedidos.
         /// - <see cref="Output"/> com status 500 (Internal Server Error) em caso de erro interno do servidor.
         /// </returns>
         [HttpGet]
         [ProducesResponseType(typeof(GetKitchenOrdersOutput), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(Output), StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(Output), StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetOrderAsync()
+        public async Task<IActionResult> GetKitchensOrderAsync()
         {
             if (!ModelState.IsValid)
                 return BadRequest();

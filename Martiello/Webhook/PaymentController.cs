@@ -12,14 +12,17 @@ namespace Martiello.Webhook
     {
         private readonly ILogger<PaymentController> _logger;
         private readonly IOrderRepository _orderRepository;
+        private readonly IPaymentRepository _paymentRepository;
 
         public PaymentController(
             ILogger<PaymentController> logger,
             IOrderRepository orderRepository,
+            IPaymentRepository paymentRepository,
             IConfiguration configuration)
         {
             _logger = logger;
             _orderRepository = orderRepository;
+            _paymentRepository = paymentRepository;
         }
 
         [HttpPost("payment")]
@@ -55,11 +58,23 @@ namespace Martiello.Webhook
                     return BadRequest("Invalid payment id format.");
                 }
 
+
                 bool orderExists = await _orderRepository.GetOrderByNumberAsync(orderId) != null;
                 if (orderExists)
                 {
-                    await _orderRepository.UpdateOrderStatusAsync(orderId, Domain.Enums.OrderStatus.Received);
-                    _logger.LogInformation($"Order {orderId} status updated to Received.");
+                    if (notification.Action == "payment.updated")
+                    {
+                        await _orderRepository.UpdateOrderStatusAsync(orderId, Domain.Enums.OrderStatus.Received);
+                        _logger.LogInformation($"Order {orderId} status updated to Received.");
+
+                        await _paymentRepository.UpdatePaymentStatusAsync((int)orderId, Domain.Enums.PaymentStatus.Approved);
+                        _logger.LogInformation($"Payment status set to approved for order {orderId}");
+                    }
+                    else
+                    {
+                        await _paymentRepository.UpdatePaymentStatusAsync((int)orderId, Domain.Enums.PaymentStatus.Refused);
+                        _logger.LogInformation($"Payment status set to approved for order {orderId}");
+                    }
                 }
                 else
                 {
